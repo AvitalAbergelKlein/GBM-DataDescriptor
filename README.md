@@ -39,8 +39,11 @@ This repository contains scripts for analyzing TCR repertoire data from GL261 gl
   - This script performs an initial quality control and exploratory analysis of TCR repertoire sequencing data (TRA, TRB, and combined TRA+TRB).
     It calculates basic statistics, including total clone counts, mean clone counts per sample, and mean clonotype counts per sample.
     It also includes a visualization of the distribution of sample counts by time point and class (Fig. 5).
-
+- **tcr_repertoire_diversity_clonality_analysis.Rmd:**
+  - After concatenating TRA and TRB files per sample, this script analyzes clonotype and clone counts across classes and time points (Fig. 6), performs clonality assessment after downsampling (Fig. 7), and evaluates diversity metrics (Fig. 8).
+    
 ## Usage
+- The analysis can be reproduced by following the steps outlined in each analysis script.
 
 ## Data Availability
 The raw sequencing data is deposited in the NCBI SRA under accession number [TODOTODO].
