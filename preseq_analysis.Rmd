@@ -1,0 +1,132 @@
+---
+title: "Bioluminescence and Body Weight Analysis (Pre-seq)"
+author: "Avital Abergel Klein"
+date: "2025-04-29"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(readxl)
+library(tidyr)
+```
+
+# Introduction
+
+This document analyzes:
+- Bioluminescence imaging data (Fig. 2)
+- Body weight tracking (Fig. 3)
+
+# Data Preparation
+
+## Bioluminescence Data
+
+```{r bioluminescence-data}
+# Vehicle group
+vehicle_bioluminescence <- data.frame(
+  Day = rep(c(7, 14, 21), each = 7),
+  MouseID = factor(rep(c("354", "416", "423", "427", "429", "440", "441"), times = 3)),
+  Bioluminescence = c(
+    8465, 6696, 39118, 8795, 1098, 5371, 11982,
+    5465, 3854, 16057, 17068, 3721, 3877, 13005,
+    78886, 43885, 1280000, 1080000, 33150, 23595, 166138
+  ),
+  Treatment = "Vehicle"
+)
+
+# αPD1 group
+apd1_mouse_ids <- c("402", "412", "418", "428", "431", "434", "435", "242", "401", "404", "405", "409", "419", "421", "426", "438", "403", "406", "408-362", "424", "430", "432", "439", "443")
+apd1_day7 <- c(16522, 12009, 3290, 21289, 27042, 3674, 23331, 58232, 5505, 9705, 4785, 2106, 37737, 5917, 4472, 2189, 6873, 1458, 3447, 47392, 5534, 8930, 8847, 1471)
+apd1_day14 <- c(12189, 2869, 28115, 29689, 4939, 3065, 8880, 30524, 4068, 683, 2096, 2654, 45214, 3748, 2974, 3624, 1208, 2894, 3415, 38860, 6215, 2259, 5357, 2344)
+apd1_day21 <- c(82656, 1861, 345, 21703, 615, 59, 154437, 241200, 284, 1339, 10144, 97, 1753, 24977, 28065, 17668, 149, 13764, 47078, 234563, 33998, 105, 33010, 32566)
+
+apd1_bioluminescence <- data.frame(
+  Day = rep(c(7, 14, 21), each = length(apd1_mouse_ids)),
+  MouseID = factor(rep(apd1_mouse_ids, times = 3)),
+  Bioluminescence = c(apd1_day7, apd1_day14, apd1_day21),
+  Treatment = "αPD1"
+)
+
+# Combine both groups
+bioluminescence_data <- bind_rows(vehicle_bioluminescence, apd1_bioluminescence)
+
+line_plot_data <- bioluminescence_data %>% mutate(Day = as.numeric(as.character(Day)))
+facet_plot_data <- bioluminescence_data %>% mutate(Day = factor(Day, levels = c("7", "14", "21")))
+```
+
+# Bioluminescence Imaging Analysis
+
+## Fig.2a: Longitudinal Quantification
+
+```{r fig2a-bioluminescence}
+ggplot(line_plot_data, aes(x = Day, y = Bioluminescence, color = Treatment, shape = Treatment)) +
+  stat_summary(fun = "mean", geom = "line", aes(group = Treatment), position = position_dodge(width = 0.5), size = 1) +
+  stat_summary(fun = "mean", geom = "point", position = position_dodge(width = 0.5), size = 3) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.5), width = 1, size = 0.8) +
+  scale_y_log10(limits = c(1e2, 1e8), oob = scales::squish, breaks = c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8)) +
+  scale_x_continuous(breaks = seq(0, 30, by = 5), limits = c(0, 30)) +
+  scale_color_manual(values = c("Vehicle" = "black", "αPD1" = "blue")) +
+  scale_shape_manual(values = c("Vehicle" = 16, "αPD1" = 17)) +
+  labs(x = "Days Post Tumor Cell Inoculation", y = "Bioluminescence (counts)") +
+  theme_classic()
+```
+
+## Fig.2b: Individual Bioluminescence Counts
+
+```{r fig2b-bioluminescence}
+ggplot(facet_plot_data, aes(x = Treatment, y = Bioluminescence, fill = Treatment, color = Treatment)) +
+  stat_summary(fun = "mean", geom = "col", position = position_dodge(width = 0.8), width = 0.6, fill = "white", alpha = 0.8) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2, color = "black") +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.8), size = 2) +
+  scale_y_log10(limits = c(1e2, 1e8), oob = scales::squish, breaks = c(1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8)) +
+  scale_fill_manual(values = c("Vehicle" = "black", "αPD1" = "blue")) +
+  scale_color_manual(values = c("Vehicle" = "black", "αPD1" = "blue")) +
+  facet_wrap(~ Day, nrow = 1, strip.position = "top", labeller = as_labeller(function(x) paste0("Day ", x))) +
+  labs(y = "Bioluminescence (counts)", x = NULL) +
+  theme_classic()
+```
+
+# Body Weight Analysis
+
+## Data Preparation
+
+```{r bodyweight-data}
+# Load body weight data
+bodyweight_apd1 <- read_excel("../../../My Passport/GBM/metaData/bodyweight.xlsx", sheet = "αpd1")
+bodyweight_vehicle <- read_excel("../../../My Passport/GBM/metaData/bodyweight.xlsx", sheet = "vehicle")
+
+# Reshape data
+df_vehicle_long <- bodyweight_vehicle %>%
+  pivot_longer(cols = -day, names_to = "MouseID", values_to = "Weight") %>%
+  mutate(Group = "Vehicle")
+
+df_apd1_long <- bodyweight_apd1 %>%
+  pivot_longer(cols = -day, names_to = "MouseID", values_to = "Weight") %>%
+  mutate(Group = "αPD1")
+
+bodyweight_data <- bind_rows(df_vehicle_long, df_apd1_long)
+
+# Calculate summary
+bodyweight_summary <- bodyweight_data %>%
+  group_by(day, Group) %>%
+  summarise(
+    mean_weight = mean(Weight, na.rm = TRUE),
+    sem_weight = sd(Weight, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+```
+
+## Fig.3: Mean Body Weight Over Time
+
+```{r fig3-bodyweight}
+ggplot(bodyweight_summary, aes(x = day, y = mean_weight, color = Group)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = mean_weight - sem_weight, ymax = mean_weight + sem_weight), width = 0.3) +
+  scale_color_manual(values = c("Vehicle" = "black", "αPD1" = "blue")) +
+  labs(x = "Days Post Tumor Cell Inoculation", y = "Mean Body Weight (g)") +
+  theme_minimal()
+```
