@@ -35,6 +35,10 @@ This repository contains scripts for analyzing TCR repertoire data from GL261 gl
      1. Longitudinal quantification of tumor bioluminescence signals (Fig. 2a).
      2. Group-wise comparison of bioluminescence counts at specific time points (Fig. 2b).
      3. Analysis of mean body weight over time for treated and control groups (Fig. 3).
+- **initial_stats_immunearch.Rmd:**
+  - This script performs an initial quality control and exploratory analysis of TCR repertoire sequencing data (TRA, TRB, and combined TRA+TRB).
+    It calculates basic statistics, including total clone counts, mean clone counts per sample, and mean clonotype counts per sample.
+    It also includes a visualization of the distribution of sample counts by time point and class (Fig. 5).
 
 ## Usage
 
