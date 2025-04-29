@@ -30,6 +30,11 @@ This repository contains scripts for analyzing TCR repertoire data from GL261 gl
 
 
 ## Data Analysis
+- **preseq_analysis.Rmd:**
+   - This script analyzes pre-sequencing biological data. It includes:
+     1. Longitudinal quantification of tumor bioluminescence signals (Fig. 2a).
+     2. Group-wise comparison of bioluminescence counts at specific time points (Fig. 2b).
+     3. Analysis of mean body weight over time for treated and control groups (Fig. 3).
 
 ## Usage
 
