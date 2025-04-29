@@ -1,0 +1,80 @@
+---
+title: "TCR Repertoire Initial Analysis (ImmuneArch)"
+author: "Avital Abergel Klein"
+date: "2025-04-29"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(immunarch)
+library(ggplot2)
+library(dplyr)
+```
+
+
+This document performs an initial statistical and visualization analysis of TCR repertoire sequencing data (TRA, TRB, and combined TRA+TRB).
+
+# Functions
+
+```{r functions}
+calculate_tcr_stats <- function(immdata, chain_name) {
+  clone_counts <- repExplore(immdata$data, .method = "clones", .col = "aa", .coding = TRUE)
+  cat("\n# Reads (clones) for", chain_name, "chain:", sum(clone_counts$Clones), "\n")
+  cat("Mean clones per sample for", chain_name, "chain:", mean(clone_counts$Clones), "\n")
+
+  unique_clonotypes <- repExplore(immdata$data, .method = "volume", .col = "aa", .coding = TRUE)
+  cat("Mean clonotypes per sample for", chain_name, "chain:", mean(unique_clonotypes$Volume), "\n")
+}
+```
+
+# Load Data
+
+```{r load-data}
+# immdata <- repLoad("../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRA/")
+# immdata <- repLoad("../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRB/")
+# immdata <- repLoad("../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRA_TRB/")
+# saveRDS(immdataA, file = "../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRA/immdata.RDS")
+# saveRDS(immdataB, file = "../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRB/immdata.RDS")
+# saveRDS(immdata, file = "../../Volumes/My Passport/GBM/rawData_trimmed_200bp_correct/TRA_TRB/immdata.RDS")
+
+# Load processed data
+immdata_TRA  <- readRDS("../../GBM/rawData_trimmed_200bp_correct/TRA/immdata.RDS")
+immdata_TRB  <- readRDS("../../GBM/rawData_trimmed_200bp_correct/TRB/immdata.RDS")
+immdata_TRAB <- readRDS("../../GBM/rawData_trimmed_200bp_correct/TRA_TRB/immdata.RDS")
+```
+
+# Prepare Metadata
+
+```{r prepare-metadata}
+metadata_TRA <- immdata_TRA$meta %>% mutate(tp = factor(tp, levels = c("0", "7", "21", "35", "49", "63", "Tumor")))
+metadata_TRB <- immdata_TRB$meta %>% mutate(tp = factor(tp, levels = c("0", "7", "21", "35", "49", "63", "Tumor")))
+metadata_TRAB <- immdata_TRAB$meta %>% mutate(tp = factor(tp, levels = c("0", "7", "21", "35", "49", "63", "Tumor")))
+```
+
+# Basic TCR Statistics
+
+```{r tcr-stats}
+calculate_tcr_stats(immdata_TRA, "TRA")
+calculate_tcr_stats(immdata_TRB, "TRB")
+calculate_tcr_stats(immdata_TRAB, "TRA+TRB")
+```
+
+# Visualization
+
+## Sample Count by Class and Time Point
+
+```{r plot-sample-count}
+ggplot(metadata_TRAB, aes(x = tp, fill = class)) +
+  geom_bar(position = "stack") +
+  geom_text(stat = "count", aes(label = ..count..), position = position_stack(vjust = 0.5)) +
+  labs(
+    title = "Sample Count by Time Point and Class",
+    x = "Time Point",
+    y = "Number of Samples",
+    fill = "Class"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Blues")
+```
