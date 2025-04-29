@@ -1,0 +1,149 @@
+---
+title: "TCR Repertoire Diversity and Clonality Analysis"
+author: "Avital Abergel Klein"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(immunarch)
+library(ggplot2)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This report analyzes TCR repertoire diversity and clonality across blood and tumor samples in different experimental groups and time points.
+
+# Functions
+
+```{r functions}
+# Process by group
+process_by_group <- function(immdata, group_name) {
+  filtered <- repFilter(immdata, .method = "by.meta", .query = list(class = include(group_name)))
+  filtered$data <- repSample(filtered$data, "downsample")
+
+  diversity_measures <- list(
+    chao1 = repDiversity(filtered$data, "chao1"),
+    hill = repDiversity(filtered$data, "hill"),
+    d50 = repDiversity(filtered$data, "d50"),
+    div = repDiversity(filtered$data, "div"),
+    gini_simp = repDiversity(filtered$data, "gini.simp"),
+    inv_simp = repDiversity(filtered$data, "inv.simp")
+  )
+  diversity_plots <- lapply(diversity_measures, function(div) vis(div, .by = "tp", .meta = filtered$meta))
+
+  return(list(
+    data = filtered$data,
+    plots = diversity_plots
+  ))
+}
+
+# Process by time point
+process_by_timepoint <- function(immdata, timepoint) {
+  filtered <- repFilter(immdata, .method = "by.meta", .query = list(tp = include(timepoint)))
+  filtered$data <- repSample(filtered$data, "downsample")
+
+  diversity_measures <- list(
+    chao1 = repDiversity(filtered$data, "chao1"),
+    hill = repDiversity(filtered$data, "hill"),
+    d50 = repDiversity(filtered$data, "d50"),
+    div = repDiversity(filtered$data, "div"),
+    gini_simp = repDiversity(filtered$data, "gini.simp"),
+    inv_simp = repDiversity(filtered$data, "inv.simp")
+  )
+  diversity_plots <- lapply(diversity_measures, function(div) vis(div, .by = "class", .meta = filtered$meta))
+
+  return(list(
+    data = filtered$data,
+    plots = diversity_plots
+  ))
+}
+```
+
+# Load Data
+
+```{r load-data}
+# Load TCR sequencing data
+immdata_AB <- readRDS("../../GBM/rawData_trimmed_200bp_correct/TRA_TRB/immdata.RDS")
+```
+
+# Metadata Preparation
+
+```{r metadata-preparation}
+metadata_AB <- immdata_AB$meta %>%
+  mutate(tp = factor(tp, levels = c("0", "7", "21", "35", "49", "63", "Tumor")))
+```
+
+# Exploratory Analysis: Volume and Clone Counts
+
+```{r exploratory-analysis}
+# Fig.6. Exploratory visualization before filtering Tumor samples.
+exp_vol <- repExplore(immdata_AB$data, .method = "volume")
+exp_cln <- repExplore(immdata_AB$data, .method = "clone")
+
+# Fig.6.a : Clonotype counts per sample by treatment group.
+vis(volume_explore, .by = "class", .meta = immdata_AB$meta) + theme_classic()
+# Fig.6.b : Clone counts per sample by treatment group.
+vis(clone_explore, .by = "class", .meta = immdata_AB$meta) + theme_classic()
+# Fig.6.c : Clonotype counts per sample by time point.
+vis(volume_explore, .by = "tp", .meta = immdata_AB$meta) + theme_classic()
+# Fig.6.d : Clone counts per sample by time point. 
+vis(clone_explore, .by = "tp", .meta = immdata_AB$meta) + theme_classic()
+```
+
+# Filter Out Tumor Samples
+
+```{r filtering-tumor}
+immdata <- repFilter(immdata_AB, .method = "by.meta", .query = list(tp = exclude("Tumor")))
+```
+
+# Diversity and Clonality Analysis by Group
+
+```{r group-analysis, warning=FALSE}
+#responders_results <- process_by_group(immdata, "Responders")
+#nonresponders_results <- process_by_group(immdata, "Non-responders")
+#control_results <- process_by_group(immdata, "Control")
+```
+
+# Diversity and Clonality Analysis by Time Point
+
+```{r timepoint-analysis, warning=FALSE}
+#t0_results <- process_by_timepoint(immdata, "0")
+#t7_results <- process_by_timepoint(immdata, "7")
+#t21_results <- process_by_timepoint(immdata, "21")
+```
+
+# Clonality Analysis: Top and Rare Clones
+
+```{r clonality-analysis}
+# Downsample for fair comparison
+immdata$data <- repSample(immdata$data, "downsample")
+
+# Top and rare clonality
+top_clonality <- repClonality(immdata$data, .method = "top", .head = c(10, 100, 1000, 3000, 10000))
+rare_clonality <- repClonality(immdata$data, .method = "rare")
+# Fig.7. Measurement of clonal proportions across blood samples following downsampling.
+vis(top_clonality, .by = "class", .meta = immdata$meta) + theme_classic()
+vis(rare_clonality, .by = "class", .meta = immdata$meta) + theme_classic()
+```
+
+```{r diversity-analysis, warning=FALSE}
+# Fig.8. TCR repertoire diversity
+div_chao <- repDiversity(immdata$data, "chao1")
+div_hill <- repDiversity(immdata$data, "hill")
+div_d50 <- repDiversity(immdata$data, "d50")
+div_div <- repDiversity(immdata$data, "div")
+div_ginisimp <- repDiversity(immdata$data, "gini.simp")
+div_invsimp <- repDiversity(immdata$data, "inv.simp")
+div_gini <- repDiversity(immdata$data, "gini")
+
+
+vis(div_div, .by = c("class"), .meta = immdata$meta) + theme_classic() + theme(legend.position = "none")
+vis(div_invsimp, .by = c("class"), .meta = immdata$meta) + theme_classic() + theme(legend.position = "none")
+
+vis(div_div, .by = c("tp"), .meta = immdata$meta) + theme_classic() + theme(legend.position = "none")
+vis(div_invsimp, .by = c("tp"), .meta = immdata$meta) + theme_classic() + theme(legend.position = "none")
+
+```
+
