@@ -8,7 +8,6 @@ This repository contains scripts for analyzing TCR repertoire data from GL261 gl
 - **Treatment Groups**: Anti-PD-1 antibody treatment vs. untreated controls
 - **Sample Collection**: Longitudinal sampling up to day 63 post-tumor implantation
 - **Sample Types**: 128 samples from PBMCs and tumor tissues
-- **Sequencing**: TCR alpha and beta chain libraries
 - **Response Rate**: ~30% of treated mice showed therapeutic response
 
 <img width="468" alt="image" src="https://github.com/user-attachments/assets/006c8e36-2d54-478c-865e-e5985335e589" />
