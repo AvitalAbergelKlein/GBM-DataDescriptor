@@ -45,4 +45,4 @@ This repository contains scripts for analyzing TCR repertoire data from GL261 gl
 - The analysis can be reproduced by following the steps outlined in each analysis script.
 
 ## Data Availability
-The raw sequencing data is deposited in the NCBI SRA under accession number [TODOTODO].
+The raw sequencing data is deposited in the NCBI SRA database under SRA and Bioproject ID PRJNA1258598.
